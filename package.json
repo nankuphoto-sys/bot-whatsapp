@@ -1,0 +1,25 @@
+{
+  "name": "bot-whatsapp",
+  "version": "1.0.0",
+  "description": "Chatbot de WhatsApp con IA (Claude) para un salón de uñas: responde con la información real del negocio, registra leads y pasa a una persona cuando hace falta",
+  "type": "module",
+  "scripts": {
+    "chat": "tsx src/consola.ts",
+    "servidor": "tsx src/servidor.ts",
+    "start": "tsx src/servidor.ts",
+    "test": "vitest run",
+    "typecheck": "tsc"
+  },
+  "author": "Jonathan Mena Ríos",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.135.0",
+    "dotenv": "^18.0.8",
+    "tsx": "^4.23.15"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}
