@@ -42,6 +42,13 @@ export async function guardarLead(
         console.warn(`Google Sheets respondió ${r.status}; el lead quedó solo en ${archivo}.`);
         return { errorSheets: `Google Sheets respondió ${r.status}` };
       }
+      // Apps Script responde 200 aunque rechace el lead (ej. clave incorrecta): hay que leer el cuerpo.
+      const cuerpo = (await r.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+      if (cuerpo?.ok !== true) {
+        const motivo = cuerpo?.error ?? "respuesta inesperada";
+        console.warn(`Google Sheets rechazó el lead (${motivo}); quedó solo en ${archivo}.`);
+        return { errorSheets: `Google Sheets rechazó el lead: ${motivo}` };
+      }
     } catch (error) {
       const mensaje = error instanceof Error ? error.message : String(error);
       console.warn(`No se pudo enviar el lead a Google Sheets (quedó en ${archivo}):`, mensaje);

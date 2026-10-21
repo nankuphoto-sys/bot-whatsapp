@@ -70,6 +70,22 @@ describe("leads", () => {
     expect(campoCsv('dijo "sábado", tarde')).toBe('"dijo ""sábado"", tarde"');
   });
 
+  it("detecta cuando Google Sheets rechaza el lead aunque responda 200", async () => {
+    const archivo = join(await mkdtemp(join(tmpdir(), "leads-")), "leads.csv");
+    const lead = { nombre: "Ana", servicio: "Pedicure spa", fecha_preferida: "viernes", notas: "" };
+    const original = globalThis.fetch;
+    try {
+      globalThis.fetch = (async () => new Response('{"ok":false,"error":"clave incorrecta"}', { status: 200 })) as typeof fetch;
+      expect(await guardarLead("57300", lead, { archivo, webhookSheets: "https://ejemplo" })).toEqual({
+        errorSheets: "Google Sheets rechazó el lead: clave incorrecta",
+      });
+      globalThis.fetch = (async () => new Response('{"ok":true}', { status: 200 })) as typeof fetch;
+      expect(await guardarLead("57300", lead, { archivo, webhookSheets: "https://ejemplo" })).toEqual({});
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
   it("escribe el encabezado solo la primera vez", async () => {
     const archivo = join(await mkdtemp(join(tmpdir(), "leads-")), "leads.csv");
     const lead = { nombre: "Ana", servicio: "Pedicure spa", fecha_preferida: "viernes", notas: "" };

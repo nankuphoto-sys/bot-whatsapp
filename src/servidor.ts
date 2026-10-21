@@ -10,7 +10,7 @@ import { enviarTexto, extraerFallosDeEntrega, extraerMensajes, firmaValida, type
  * Servidor del webhook de WhatsApp.
  *   GET  /webhook  verificación inicial de Meta (hub.challenge)
  *   POST /webhook  mensajes entrantes: se responde 200 de inmediato y se procesan aparte
- *   GET  /salud    para un monitor externo de disponibilidad (ver src/alertas.ts)
+ *   GET/HEAD /salud (y /) para un monitor externo de disponibilidad (ver src/alertas.ts)
  */
 const requerida = (nombre: string) => {
   const valor = process.env[nombre];
@@ -108,10 +108,14 @@ function leerCuerpo(req: IncomingMessage): Promise<string> {
 
 const servidor = createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", "http://localhost");
-  if (url.pathname === "/salud" && req.method === "GET") {
-    return res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify(monitor.estado()));
+  const ruta = url.pathname.replace(/\/+$/, "") || "/";
+  // UptimeRobot y otros monitores consultan con HEAD por defecto; la raíz también responde para que
+  // un monitor con la URL sin /salud no marque el servicio como caído.
+  if ((ruta === "/salud" || ruta === "/") && (req.method === "GET" || req.method === "HEAD")) {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return req.method === "HEAD" ? res.end() : res.end(JSON.stringify(monitor.estado()));
   }
-  if (url.pathname !== "/webhook") return res.writeHead(404).end();
+  if (ruta !== "/webhook") return res.writeHead(404).end();
 
   if (req.method === "GET") {
     const ok = url.searchParams.get("hub.mode") === "subscribe" && url.searchParams.get("hub.verify_token") === tokenVerificacion;
